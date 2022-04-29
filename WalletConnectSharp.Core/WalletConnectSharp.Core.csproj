@@ -21,6 +21,11 @@
         <FileVersion>1.6.5</FileVersion>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="BouncyCastle" Version="1.8.9" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
