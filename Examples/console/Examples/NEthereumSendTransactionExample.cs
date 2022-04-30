@@ -15,14 +15,8 @@ namespace WalletConnectSharp.Examples.Examples
     {
         public static readonly string PROJECT_ID = "r84TUAUGeuaW5xbzrivZfxqmhAkuMUQl";
         
-        [Function("deposit", "bool")]
-        public class WEthDepositFunction : FunctionMessage
-        {
-            [Parameter("uint256", "payableAmount")]
-            public BigInteger EthAmount { get; set; }
-        }
-        
-        [Function("deposit", "bool")]
+       
+        [Function("deposit")]
         public class DepositFunction : FunctionMessage
         {
         }
@@ -59,25 +53,18 @@ namespace WalletConnectSharp.Examples.Examples
             Console.WriteLine("Using RPC endpoint " + rpcEndpoint + " as the fallback RPC endpoint");
             
             //We use an External Account so we can sign transactions
-            var web3 = client.BuildWeb3(new Uri(rpcEndpoint)).AsExternalSigner();
+            var web3 = client.BuildWeb3(new Uri(rpcEndpoint)).AsWalletAccount(true);
 
             var firstAccount = client.Accounts[0];
 
-            var secondAccount = "0x78F7911996e6803f26e180d21d78949f0fa386EA";
-
-            Console.WriteLine("Sending test transactions from " + firstAccount + " to " + secondAccount);
+            Console.WriteLine($"Signing test transactions from {firstAccount}");
             
-            var transferHandler = web3.Eth.GetContractTransactionHandler<WEthDepositFunction>();
-
-            var transfer = new WEthDepositFunction()
+            var depositHandler = web3.Eth.GetContractTransactionHandler<DepositFunction>();
+            var deposit = new DepositFunction()
             {
-                EthAmount = 1
+                AmountToSend = 1
             };
-            var transactionReceipt = await transferHandler.SignTransactionAsync(firstAccount, transfer);
-            
-            Console.WriteLine(transactionReceipt);
-
-            await web3.Eth.Transactions.SendRawTransaction.SendRequestAsync(transactionReceipt);
+            var transactionReceipt = await depositHandler.SignTransactionAsync(firstAccount, deposit);
             
             Console.WriteLine(transactionReceipt);
 

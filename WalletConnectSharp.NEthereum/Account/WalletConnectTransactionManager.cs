@@ -1,6 +1,8 @@
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
 using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RLP;
 using Nethereum.RPC.Accounts;
@@ -16,9 +18,18 @@ namespace WalletConnectSharp.NEthereum.Account
 {
     public class WalletConnectTransactionManager : TransactionManager
     {
+
         private WalletConnectSession _session;
         private IAccount _account;
         private bool allowEthSign;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="session"></param>
+        /// <param name="account"></param>
+        /// <param name="allowEthSign"></param>
         public WalletConnectTransactionManager(IClient client, WalletConnectSession session, IAccount account, bool allowEthSign) : base(client)
         {
             _session = session;
@@ -26,14 +37,20 @@ namespace WalletConnectSharp.NEthereum.Account
             this.allowEthSign = allowEthSign;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public override async Task<string> SignTransactionAsync(TransactionInput transaction)
         {
+            //RWM: The ChainId needs to be added to the transaction to prevent replay attacks.
+            transaction.ChainId = new HexBigInteger(new BigInteger(_session.ChainId));
+
             try
             {
                 var request = new NEthSignTransaction(transaction);
-
                 var response = await _session.Send<NEthSignTransaction, EthResponse>(request);
-
                 return response.Result;
             }
             catch (WalletException e)
@@ -64,6 +81,7 @@ namespace WalletConnectSharp.NEthereum.Account
                 byte[] to = HexByteConvertorExtensions.HexToByteArray(transaction.To);
                 byte[] amount = transaction.Value.Value.ToBytesForRLPEncoding();
                 byte[] data = HexByteConvertorExtensions.HexToByteArray(transaction.Data);
+                byte[] chainId = transaction.ChainId.Value.ToBytesForRLPEncoding();
 
                 byte[] rawData = RLP.EncodeList(new[]
                 {
@@ -72,7 +90,8 @@ namespace WalletConnectSharp.NEthereum.Account
                     gasLimit,
                     to,
                     amount,
-                    data
+                    data,
+                    chainId
                 });
 
                 var hash = "0x" + Sha3Keccack.Current.CalculateHash(rawData).ToHex();
@@ -85,5 +104,7 @@ namespace WalletConnectSharp.NEthereum.Account
 
             }
         }
+
     }
+
 }
