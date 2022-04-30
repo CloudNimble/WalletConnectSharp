@@ -56,18 +56,22 @@ namespace WalletConnectSharp.Examples.Examples
             var web3 = client.BuildWeb3(new Uri(rpcEndpoint)).AsWalletAccount(true);
 
             var firstAccount = client.Accounts[0];
+            var contractAddress = "YOUR ADDRESS HERE";
 
             Console.WriteLine($"Signing test transactions from {firstAccount}");
             
             var depositHandler = web3.Eth.GetContractTransactionHandler<DepositFunction>();
             var deposit = new DepositFunction()
             {
+                FromAddress = firstAccount,
                 AmountToSend = 1
             };
-            var transactionReceipt = await depositHandler.SignTransactionAsync(firstAccount, deposit);
+            var signedTransaction = await depositHandler.SignTransactionAsync(contractAddress, deposit);
             
-            Console.WriteLine(transactionReceipt);
+            Console.WriteLine($"Signed Transaction: {signedTransaction}");
 
+            var result = web3.Eth.Transactions.SendRawTransaction.SendRequestAsync(signedTransaction);
+            Console.WriteLine($"Sent Transaction: {result}");
 
             await client.Disconnect();
         }

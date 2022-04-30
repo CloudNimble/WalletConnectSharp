@@ -78,6 +78,7 @@ namespace WalletConnectSharp.NEthereum.Account
                 byte[] nonce = transaction.Nonce.Value.ToBytesForRLPEncoding();
                 byte[] gasPrice = transaction.GasPrice.Value.ToBytesForRLPEncoding();
                 byte[] gasLimit = transaction.Gas.Value.ToBytesForRLPEncoding();
+                byte[] from = HexByteConvertorExtensions.HexToByteArray(transaction.From);
                 byte[] to = HexByteConvertorExtensions.HexToByteArray(transaction.To);
                 byte[] amount = transaction.Value.Value.ToBytesForRLPEncoding();
                 byte[] data = HexByteConvertorExtensions.HexToByteArray(transaction.Data);
@@ -88,6 +89,7 @@ namespace WalletConnectSharp.NEthereum.Account
                     nonce,
                     gasPrice,
                     gasLimit,
+                    from,
                     to,
                     amount,
                     data,
