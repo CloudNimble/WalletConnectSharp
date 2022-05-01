@@ -1,6 +1,8 @@
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
 using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.RLP;
 using Nethereum.RPC.Accounts;
@@ -8,6 +10,7 @@ using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.TransactionManagers;
 using Nethereum.Util;
 using WalletConnectSharp.Core;
+using WalletConnectSharp.Core.Models;
 using WalletConnectSharp.Core.Models.Ethereum;
 using WalletConnectSharp.NEthereum.Model;
 
@@ -15,28 +18,45 @@ namespace WalletConnectSharp.NEthereum.Account
 {
     public class WalletConnectTransactionManager : TransactionManager
     {
-        public static readonly string[] EthSignWallets = new[]
-        {
-            "metamask",
-            "trust"
-        };
 
-        
         private WalletConnectSession _session;
         private IAccount _account;
-        public WalletConnectTransactionManager(IClient client, WalletConnectSession session, IAccount account) : base(client)
+        private bool allowEthSign;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="session"></param>
+        /// <param name="account"></param>
+        /// <param name="allowEthSign"></param>
+        public WalletConnectTransactionManager(IClient client, WalletConnectSession session, IAccount account, bool allowEthSign) : base(client)
         {
             _session = session;
             _account = account;
+            this.allowEthSign = allowEthSign;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public override async Task<string> SignTransactionAsync(TransactionInput transaction)
         {
-            if (EthSignWallets.Contains(_session.WalletMetadata.Name.ToLower()))
-            {
-                //MetaMask does not support eth_signTransaction
-                //Therefore, we'll use eth_sign for now
+            //RWM: The ChainId needs to be added to the transaction to prevent replay attacks.
+            transaction.ChainId = new HexBigInteger(new BigInteger(_session.ChainId));
 
+            try
+            {
+                var request = new NEthSignTransaction(transaction);
+                var response = await _session.Send<NEthSignTransaction, EthResponse>(request);
+                return response.Result;
+            }
+            catch (WalletException e)
+            {
+                if (!e.Message.ToLower().Contains("method not supported") || !allowEthSign) throw;
+                
                 if (transaction.Nonce == null)
                 {
                     var nextNonce = await _account.NonceService.GetNextNonceAsync();
@@ -58,18 +78,22 @@ namespace WalletConnectSharp.NEthereum.Account
                 byte[] nonce = transaction.Nonce.Value.ToBytesForRLPEncoding();
                 byte[] gasPrice = transaction.GasPrice.Value.ToBytesForRLPEncoding();
                 byte[] gasLimit = transaction.Gas.Value.ToBytesForRLPEncoding();
+                byte[] from = HexByteConvertorExtensions.HexToByteArray(transaction.From);
                 byte[] to = HexByteConvertorExtensions.HexToByteArray(transaction.To);
                 byte[] amount = transaction.Value.Value.ToBytesForRLPEncoding();
                 byte[] data = HexByteConvertorExtensions.HexToByteArray(transaction.Data);
+                byte[] chainId = transaction.ChainId.Value.ToBytesForRLPEncoding();
 
                 byte[] rawData = RLP.EncodeList(new[]
                 {
                     nonce,
                     gasPrice,
                     gasLimit,
+                    from,
                     to,
                     amount,
-                    data
+                    data,
+                    chainId
                 });
 
                 var hash = "0x" + Sha3Keccack.Current.CalculateHash(rawData).ToHex();
@@ -79,15 +103,10 @@ namespace WalletConnectSharp.NEthereum.Account
                 var response = await _session.Send<EthSign, EthResponse>(request);
 
                 return response.Result;
-            }
-            else
-            {
-                var request = new NEthSignTransaction(transaction);
 
-                var response = await _session.Send<NEthSignTransaction, EthResponse>(request);
-
-                return response.Result;
             }
         }
+
     }
+
 }

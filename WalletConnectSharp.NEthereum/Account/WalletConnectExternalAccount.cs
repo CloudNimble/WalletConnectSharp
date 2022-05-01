@@ -1,9 +1,9 @@
-using System;
-using System.Reflection.PortableExecutable;
-using System.Threading.Tasks;
 using Nethereum.JsonRpc.Client;
 using Nethereum.Signer;
 using Nethereum.Signer.Crypto;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using WalletConnectSharp.Core;
 using WalletConnectSharp.Core.Models.Ethereum;
 using WalletConnectSharp.Core.Utils;
@@ -12,12 +12,11 @@ namespace WalletConnectSharp.NEthereum.Account
 {
     public class WalletConnectExternalAccount : EthExternalSignerBase
     {
-        public static readonly string[] EthSignWallets = new[]
+        public static readonly int[] EIP1559Chains = new[]
         {
-            "metamask",
-            "trust"
+            1,
         };
-        
+
         private WalletConnectSession _session;
         private IClient _client;
         
@@ -59,13 +58,7 @@ namespace WalletConnectSharp.NEthereum.Account
 
         public override bool CalculatesV { get; protected set; } = true;
 
-        public override bool Supported1559
-        {
-            get
-            {
-                return _session.ChainId == 1;
-            }
-        }
+        public override bool Supported1559 => EIP1559Chains.Contains(_session.ChainId);
 
         public override ExternalSignerTransactionFormat ExternalSignerTransactionFormat { get; protected set; } =
             ExternalSignerTransactionFormat.Hash;
