@@ -41,7 +41,7 @@ namespace WalletConnectSharp.Examples.Examples
 
             var client = new WalletConnect(clientMeta);
 
-            var rpcEndpoint = "https://eth-mainnet.alchemyapi.io/v2/" + PROJECT_ID;
+            var rpcEndpoint = "https://speedy-nodes-nyc.moralis.io/43da779de2c2508fd7117ab6/bsc/testnet/";// + PROJECT_ID;
             
             Console.WriteLine("Connect using the following URL");
             Console.WriteLine(client.URI);
