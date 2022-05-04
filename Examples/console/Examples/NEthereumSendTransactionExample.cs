@@ -15,8 +15,14 @@ namespace WalletConnectSharp.Examples.Examples
     {
         public static readonly string PROJECT_ID = "r84TUAUGeuaW5xbzrivZfxqmhAkuMUQl";
         
-       
-        [Function("deposit")]
+        [Function("deposit", "bool")]
+        public class WEthDepositFunction : FunctionMessage
+        {
+            [Parameter("uint256", "payableAmount")]
+            public BigInteger EthAmount { get; set; }
+        }
+        
+        [Function("deposit", "bool")]
         public class DepositFunction : FunctionMessage
         {
         }
@@ -41,7 +47,7 @@ namespace WalletConnectSharp.Examples.Examples
 
             var client = new WalletConnect(clientMeta);
 
-            var rpcEndpoint = "https://speedy-nodes-nyc.moralis.io/43da779de2c2508fd7117ab6/bsc/testnet/";// + PROJECT_ID;
+            var rpcEndpoint = "https://eth-mainnet.alchemyapi.io/v2/" + PROJECT_ID;
             
             Console.WriteLine("Connect using the following URL");
             Console.WriteLine(client.URI);
@@ -51,28 +57,26 @@ namespace WalletConnectSharp.Examples.Examples
             Console.WriteLine("The account " + client.Accounts[0] + " has connected!");
 
             Console.WriteLine("Using RPC endpoint " + rpcEndpoint + " as the fallback RPC endpoint");
-
+            
             //We use an External Account so we can sign transactions
             var web3 = client.BuildWeb3(new Uri(rpcEndpoint)).AsWalletAccount(true);
 
             var firstAccount = client.Accounts[0];
-            var contractAddress = "0x9e0575D1e280D97b63A3021Eb335B6D48b0C6cc3";
 
-            Console.WriteLine($"Signing test transactions from {firstAccount}");
+            var secondAccount = "0x78F7911996e6803f26e180d21d78949f0fa386EA";
+
+            Console.WriteLine("Sending test transactions from " + firstAccount + " to " + secondAccount);
             
-            var depositHandler = web3.Eth.GetContractTransactionHandler<DepositFunction>();
-            var deposit = new DepositFunction()
+            var transferHandler = web3.Eth.GetContractTransactionHandler<WEthDepositFunction>();
+
+            var transfer = new WEthDepositFunction()
             {
-                FromAddress = firstAccount,
-                AmountToSend = 1
+                EthAmount = 1
             };
-            var signedTransaction = await depositHandler.SignTransactionAsync(contractAddress, deposit);
+            var transactionReceipt = await transferHandler.SendRequestAndWaitForReceiptAsync(firstAccount, transfer);
             
-            Console.WriteLine($"Signed Transaction: {signedTransaction}");
-
-            var result = await web3.Eth.Transactions.SendRawTransaction.SendRequestAsync(signedTransaction);
-            Console.WriteLine($"Sent Transaction: {result}");
-
+            Console.WriteLine(transactionReceipt);
+            
             await client.Disconnect();
         }
     }
