@@ -86,7 +86,10 @@ namespace WalletConnectSharp.Desktop.Network
 
         public async Task Close()
         {
-            await client?.Stop(WebSocketCloseStatus.NormalClosure, "");
+            if (client is not null)
+            {
+                await client?.Stop(WebSocketCloseStatus.NormalClosure, "");
+            }
         }
 
         public async Task SendMessage(NetworkMessage message)
