@@ -25,8 +25,7 @@ namespace WalletConnectSharp.Desktop.Network
 
         public void Dispose()
         {
-            if (client != null)
-                client.Dispose();
+            client?.Dispose();
         }
 
         public bool Connected
@@ -87,7 +86,7 @@ namespace WalletConnectSharp.Desktop.Network
 
         public async Task Close()
         {
-            await client.Stop(WebSocketCloseStatus.NormalClosure, "");
+            await client?.Stop(WebSocketCloseStatus.NormalClosure, "");
         }
 
         public async Task SendMessage(NetworkMessage message)
