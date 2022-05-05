@@ -54,8 +54,8 @@ namespace WalletConnectSharp.Desktop.Network
             
             client = new WebsocketClient(new Uri(url));
             
-            client.MessageReceived.ObserveOn(TaskPoolScheduler.Default).Subscribe(OnMessageReceived);
-            client.DisconnectionHappened.ObserveOn(TaskPoolScheduler.Default).Subscribe(delegate(DisconnectionInfo info) { client.Reconnect(); });
+            client.MessageReceived/*.ObserveOn(TaskPoolScheduler.Default)*/.Subscribe(OnMessageReceived);
+            client.DisconnectionHappened/*.ObserveOn(TaskPoolScheduler.Default)*/.Subscribe(delegate(DisconnectionInfo info) { client.Reconnect(); });
 
             //TODO Log this
             /*client.ReconnectionHappened.Subscribe(delegate(ReconnectionInfo info)
