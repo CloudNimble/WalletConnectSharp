@@ -2,6 +2,7 @@ using WalletConnectSharp.Core.Models.Ethereum;
 
 namespace WalletConnectSharp.Core
 {
+
     /// <summary>
     /// A static class containing common Chain Ids 
     /// </summary>
@@ -54,5 +55,7 @@ namespace WalletConnectSharp.Core
         {
             chainId = "0x6"
         };
+
     }
+
 }
